@@ -90,8 +90,8 @@ Edita `appsettings.Development.json`:
 ```
 ### 3. Aplicar migraciones
 ```bash
-dotnet ef migrations add InitialCreate --project src/SmartInvoice.Infrastructure --startup-project src/SmartInvoice.Api
-dotnet ef database update --project src/SmartInvoice.Infrastructure --startup-project src/SmartInvoice.Api
+dotnet ef migrations add InitialCreate --project backend/SmartInvoice.Infrastructure --startup-project backend/SmartInvoice.Api
+dotnet ef database update --project backend/SmartInvoice.Infrastructure --startup-project backend/SmartInvoice.Api
 
 ```
 
@@ -107,8 +107,8 @@ Swagger UI: `https://localhost:3000/swagger`
 ## 📁 Estructura del Proyecto
 ```
 SmartInvoice/
-├── src/
-│   ├── SmartInvoice.Api/              # Capa de presentación (Controllers)
+├── backend/
+│   ├── SmartInvoice.API/              # Capa de presentación (Controllers)
 │   ├── SmartInvoice.Application/      # Lógica de aplicación (CQRS)
 │   │   ├── Commands/                  # Commands (escritura)
 │   │   ├── Queries/                   # Queries (lectura)
@@ -116,9 +116,9 @@ SmartInvoice/
 │   │   └── Mappings/                  # Perfiles de AutoMapper
 │   ├── SmartInvoice.Domain/           # Entidades y lógica de negocio
 │   │   ├── Entities/                  # Modelos de dominio
-│   │   └── Exceptions/                # Excepciones personalizadas
+│   │   
 │   └── SmartInvoice.Infrastructure/   # Acceso a datos
-│       ├── Data/                      # DbContext, UnitOfWork
+│       ├── Data/                      # DbContext
 │       └── Repositories/              # (Opcional) Repositorios específicos
 
 ```
@@ -188,7 +188,7 @@ POST /api/invoices
     "Status": "Issued",
     "createdAt": "2024-11-01T10:30:00Z",
     "dueDate": "2024-12-01T10:30:00Z",
-    "invoiceItems": [
+    "InvoiceItems": [
       {
         "productId": 10,
         "productName": "Laptop Dell",
