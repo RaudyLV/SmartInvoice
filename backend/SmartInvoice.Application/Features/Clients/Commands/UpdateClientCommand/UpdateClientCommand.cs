@@ -1,0 +1,43 @@
+using AutoMapper;
+using MediatR;
+using SmartInvoice.Application.Dtos;
+using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Interfaces;
+using SmartInvoice.Application.Wrappers;
+
+namespace SmartInvoice.Application.Features.Clients.Commands.UpdateClientCommand
+{
+    public class UpdateClientCommand : IRequest<Response<ClientDto>>
+    {
+        public int ClientId { get; set; }
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+    }
+
+    public class UpdateClientCommandHandler : IRequestHandler<UpdateClientCommand, Response<ClientDto>>
+    {
+        private readonly IClientServices _clientServices;
+        private readonly IMapper _mapper;
+        public UpdateClientCommandHandler(IClientServices clientServices, IMapper mapper)
+        {
+            _clientServices = clientServices;
+            _mapper = mapper;
+        }
+
+        public async Task<Response<ClientDto>> Handle(UpdateClientCommand request, CancellationToken cancellationToken)
+        {
+            var client = await _clientServices.GetClientById(request.ClientId);
+            if (client == null)
+                throw new NotFoundException("Client not found");
+
+            _mapper.Map(request, client);
+            await _clientServices.UpdateClient(client);
+
+            var clientDto = _mapper.Map<ClientDto>(client);
+
+            return new Response<ClientDto>(clientDto, "Client updated successfully");
+        }
+    }
+}
