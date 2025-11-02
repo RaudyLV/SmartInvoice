@@ -1,9 +1,11 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartInvoice.Application.Features.Clients.Commands.CreateClientCommand;
 using SmartInvoice.Application.Features.Clients.Commands.DeleteClientCommand;
 using SmartInvoice.Application.Features.Clients.Commands.UpdateClientCommand;
 using SmartInvoice.Application.Features.Clients.Queries;
+using SmartInvoice.Domain.Enums;
 
 namespace SmartInvoice.API.Controllers
 {
@@ -11,27 +13,80 @@ namespace SmartInvoice.API.Controllers
     public class ClientsController : BaseApiController
     {
         [HttpGet]
-        public async Task<IActionResult> GetClientsAsync()
+        public async Task<IActionResult> GetClientsAsync(
+            [FromQuery] string? q,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = "CreatedAt",
+            [FromQuery] bool sortDescending = true
+        )
         {
-            return Ok(await Mediator!.Send(new GetAllClientsQuery()));
+            var query = new GetAllClientsQuery
+            {
+                SearchTerm = q!,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortBy = sortBy,
+                SortDescending = sortDescending
+            };
+
+            var result = await Mediator!.Send(query);
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(new
+            {
+                result.Data.TotalCount,
+                result.Data.PageNumber,
+                result.Data.PageSize,
+                result.Data.TotalPages,
+                result.Data.HasPreviousPage,
+                result.Data.HasNextPage
+            }));
+
+            return Ok(result);
         }
 
-        [HttpGet("search")]
-        public async Task<IActionResult> FindClientByQueryAsync([FromQuery] string q)
-        {
-            if (string.IsNullOrEmpty(q))
-                return BadRequest("Search query is required");
-
-            return Ok(await Mediator!.Send(new FindClientByQuery(q)));
-        }
 
         [HttpGet("{name}/invoices")]
-        public async Task<IActionResult> GetClientInvoicesByName(string name)
+        public async Task<IActionResult> GetClientInvoicesByName(
+            string name,
+            [FromQuery] DateTime? issuedDate,
+            [FromQuery] DateTime? dueDate,
+            [FromQuery] int? minPrice,
+            [FromQuery] int? maxPrice,
+            [FromQuery] Status? status,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = "CreatedAt",
+            [FromQuery] bool sortDescending = true
+        )
         {
-            if (string.IsNullOrEmpty(name))
-                return BadRequest("Client name is required");
+            var query = new GetClientInvoicesByFilterQuery
+            {
+                Name = name,
+                IssuedDate = issuedDate,
+                DueDate = dueDate,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                Status = status,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortBy = sortBy,
+                SortDescending = sortDescending
+            };
 
-            return Ok(await Mediator!.Send(new GetClientInvoicesByNameQuery(name)));
+            var result = await Mediator!.Send(query);
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(new
+            {
+                result.Data.TotalCount,
+                result.Data.PageNumber,
+                result.Data.PageSize,
+                result.Data.TotalPages,
+                result.Data.HasPreviousPage,
+                result.Data.HasNextPage
+            }));
+
+            return Ok(result);
         }
 
         [HttpPost]

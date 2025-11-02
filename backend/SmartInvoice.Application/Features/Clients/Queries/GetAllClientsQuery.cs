@@ -6,9 +6,17 @@ using SmartInvoice.Application.Wrappers;
 
 namespace SmartInvoice.Application.Features.Clients.Queries
 {
-    public record GetAllClientsQuery : IRequest<Response<List<ClientDto>>>;
+    public class GetAllClientsQuery : IRequest<Response<PagedList<ClientDto>>>
+    {
+        public string SearchTerm { get; set; }
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public string SortBy { get; set;} = "Name";
+        public bool SortDescending  { get; set;} = true;
+    }
 
-    public class GetAllClientsQueryHandler : IRequestHandler<GetAllClientsQuery, Response<List<ClientDto>>>
+    public class GetAllClientsQueryHandler : 
+    IRequestHandler<GetAllClientsQuery, Response<PagedList<ClientDto>>>
     {
         private readonly IClientServices _clientServices;
 
@@ -17,11 +25,20 @@ namespace SmartInvoice.Application.Features.Clients.Queries
             _clientServices = clientServices;
         }
 
-        public async Task<Response<List<ClientDto>>> Handle(GetAllClientsQuery request, CancellationToken cancellationToken)
+        public async Task<Response<PagedList<ClientDto>>> Handle(GetAllClientsQuery request, CancellationToken cancellationToken)
         {
-            var clients = await _clientServices.GetAllClientsAsync();
+            var clientsDto = await _clientServices.GetAllClientsAsync(request);
 
-            return new Response<List<ClientDto>>(clients);
+            int totalCount = await _clientServices.CountAsync(request.SearchTerm);
+
+            var pagedList = PagedList<ClientDto>.Create(
+                clientsDto,
+                totalCount,
+                request.PageNumber,
+                request.PageSize);
+
+
+            return new Response<PagedList<ClientDto>>(pagedList);
         }
     }
 
