@@ -1,4 +1,5 @@
 using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Features.Clients.Queries;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Specifications.Invoices;
 using SmartInvoice.Domain.Entities;
@@ -46,13 +47,31 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
 
             return invoices;
         }
-        public async Task<List<InvoiceDto>> GetClientInvoicesByName(string clientName)
+        public async Task<List<InvoiceDto>> GetClientInvoicesByFilter(GetClientInvoicesByFilterQuery query)
         {
-            var clientInvoices = await _repository.ListAsync(new GetClientInvoicesSpec(clientName));
+            var clientInvoices = await _repository.ListAsync(new ClientsInvoicesWithFilterSpec(
+                name: query.Name,
+                issuedDate: query.IssuedDate,
+                dueDate: query.DueDate,
+                minPrice: query.MinPrice,
+                maxPrice: query.MaxPrice,
+                status: query.Status,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize,
+                sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
+
             if (clientInvoices == null || clientInvoices.Count <= 0)
                 throw new NotFoundException("This client has no active invoices");
 
             return clientInvoices;
+        }
+        public async Task<int> CountAsync(string query)
+        {
+            int count = await _repository.CountAsync(new CountInvoicesSpec(query));
+
+            return count;
         }
 
         public async Task<Invoice> GetById(int id)
@@ -97,5 +116,6 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
 
             return $"F{nextNumber:D6}"; // F000001, F000002, etc.
         }
+
     }
 }
