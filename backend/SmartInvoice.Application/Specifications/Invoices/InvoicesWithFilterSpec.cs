@@ -6,66 +6,52 @@ using SmartInvoice.Domain.Enums;
 
 namespace SmartInvoice.Application.Specifications.Invoices
 {
-    public class ClientsInvoicesWithFilterSpec : Specification<Invoice, InvoiceDto>
+    public class InvoicesWithFilterSpec : Specification<Invoice, InvoiceDto>
     {
-        public ClientsInvoicesWithFilterSpec(
-            string name = null!,
-            DateTime? issuedDate = null,
-            DateTime? dueDate = null,
+        public InvoicesWithFilterSpec(
+            string searchTerm = null!,
             decimal? minPrice = null,
             decimal? maxPrice = null,
             Status? status = null,
             int pageNumber = 1,
             int pageSize = 10,
             string sortBy = "CreatedAt",
-            bool sortDescending = false
-        )
+            bool sortDescending = false)
         {
-            string normalizedSearch = StringNormalizerHelper.NormalizeSearchTerm(name);
+            string normalizedSearch = StringNormalizerHelper.NormalizeSearchTerm(searchTerm);
 
             Query.Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(i => new InvoiceDto
                 {
                     Id = i.Id,
-                    ClientName = i.Client.Name,
                     InvoiceNumber = i.InvoiceNumber,
+                    ClientName = i.Client.Name,
                     IssueDate = i.IssueDate,
                     DueDate = i.DueDate,
+                    Status = i.Status.ToString(),
                     InvoiceItems = i.InvoiceItems.Select(it => new InvoiceItemDto
                     {
                         Id = it.Id,
                         InvoiceId = it.InvoiceId,
                         ProductName = it.Product.Name,
-                        Quantity = it.Quantity,
                         UnitPrice = it.UnitPrice,
+                        Quantity = it.Quantity,
                         TaxRate = it.TaxRate,
                         Total = it.Total
+
                     }).ToList(),
-                    Status = i.Status.ToString(),
                     SubTotal = i.SubTotal,
                     TaxTotal = i.TaxTotal,
-                    Discount = i.Discount,
                     Total = i.Total,
                     CreatedAt = i.CreatedAt
-                }); ;
+
+                });
 
             if (!string.IsNullOrEmpty(normalizedSearch))
             {
-                Query.Search(x => x.Client.Name, $"%{normalizedSearch}%");
-            }
-
-            if (issuedDate.HasValue && dueDate.HasValue)
-            {
-                Query.Where(x => x.IssueDate == issuedDate.Value && x.DueDate == dueDate.Value);
-            }
-            else if (issuedDate.HasValue)
-            {
-                Query.Where(x => x.IssueDate == issuedDate.Value);
-            }
-            else if (dueDate.HasValue)
-            {
-                Query.Where(x => x.IssueDate == dueDate.Value);
+                Query.Search(x => x.InvoiceNumber, $"%{normalizedSearch}%")
+                    .Search(x => x.Client.Name, $"%{normalizedSearch}%");
             }
 
             if (minPrice.HasValue && maxPrice.HasValue)
@@ -80,8 +66,8 @@ namespace SmartInvoice.Application.Specifications.Invoices
             {
                 Query.Where(x => x.Total <= maxPrice.Value);
             }
-            
-            if (status.HasValue)
+
+            if(status.HasValue)
             {
                 Query.Where(x => x.Status == status);
             }
@@ -90,14 +76,9 @@ namespace SmartInvoice.Application.Specifications.Invoices
             {
                 switch (sortBy?.ToLower())
                 {
-                    case "Total":
-                        Query.OrderByDescending(x => x.Total);
-                        break;
-
                     case "InvoiceNumber":
                         Query.OrderByDescending(x => x.InvoiceNumber);
                         break;
-
 
                     default:
                         Query.OrderByDescending(x => x.CreatedAt);
@@ -106,12 +87,8 @@ namespace SmartInvoice.Application.Specifications.Invoices
             }
             else
             {
-                switch (sortBy?.ToLower())
+                switch(sortBy?.ToLower())
                 {
-                    case "Total":
-                        Query.OrderBy(x => x.Total);
-                        break;
-
                     case "InvoiceNumber":
                         Query.OrderBy(x => x.InvoiceNumber);
                         break;
