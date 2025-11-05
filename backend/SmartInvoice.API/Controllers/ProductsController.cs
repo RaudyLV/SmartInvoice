@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartInvoice.Application.Features.Products.Commands.CreateProductCommand;
@@ -10,9 +11,40 @@ namespace SmartInvoice.API.Controllers
     public class ProductsController : BaseApiController
     {
         [HttpGet]
-        public async Task<IActionResult> GetAllProductsAsync()
+        public async Task<IActionResult> GetAllProductsAsync(
+            [FromQuery] string? search,
+            [FromQuery] int? minPrice,
+            [FromQuery] int? maxPrice,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = "CreatedAt",
+            [FromQuery] bool sortDescending = true
+        )
         {
-            return Ok(await Mediator!.Send(new GetAllProductsQuery()));
+            var query = new GetAllProductsQuery
+            {
+                SearchTerm = search!,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortBy = sortBy,
+                SortDescending = sortDescending
+            };
+
+            var result = await Mediator!.Send(query);
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(new
+            {
+                result.Data.TotalCount,
+                result.Data.PageNumber,
+                result.Data.PageSize,
+                result.Data.TotalPages,
+                result.Data.HasPreviousPage,
+                result.Data.HasNextPage
+            }));
+
+            return Ok(result);
         }
 
         [HttpGet("{id:int}")]
