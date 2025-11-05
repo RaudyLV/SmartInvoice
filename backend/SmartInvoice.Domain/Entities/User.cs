@@ -7,6 +7,5 @@ public class User
     public string Email { get; set; }
     public string PasswordHash { get; set; }
     public DateTime CreatedAt { get; set; }
-    public List<Invoice> Invoices { get; set; }
     public List<UserRole> UserRoles { get; set; }
 }
