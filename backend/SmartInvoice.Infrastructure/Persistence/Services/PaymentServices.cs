@@ -1,5 +1,6 @@
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Features.Payments.Queries;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Specifications.Payments;
 using SmartInvoice.Domain.Entities;
@@ -17,16 +18,26 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             _invoiceServices = invoiceServices;
         }
 
-        public async Task<List<PaymentDto>> GetAllPaymentsAsync()
+        public async Task<List<PaymentDto>> PaymetsWithFilterAsync(GetAllPaymentsQuery query)
         {
-            var payments = await _baseRepository.ListAsync(new GetAllPaymentsSpec());
-            if (payments == null || payments.Count <=0)
+            var payments = await _baseRepository.ListAsync(new PaymentsWithFilterSpec(
+                searchTerm: query.SearchTerm,
+                minAmount: query.MinAmount,
+                maxAmount: query.MaxAmount,
+                method: query.Method,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize,
+                sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
+
+            if (!payments.Any())
             {
-                throw new NotFoundException("No payments were found");
+                throw new NotFoundException("No payments have been made yet.");
             }
+
             return payments;
         }
-
 
         public async Task<PaymentDto> GetPaymentById(int id)
         {
@@ -44,6 +55,12 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             payment.PaymentDate = DateTime.UtcNow;
             await _baseRepository.AddAsync(payment);
             await _baseRepository.SaveChangesAsync();
+        }
+        public async Task<int> CountAsync(string searchTerm)
+        {
+            int totalCount = await _baseRepository.CountAsync(new CountPaymentsSpec(searchTerm));
+
+            return totalCount;
         }
 
         public async Task<(bool, decimal)> HasPaymentAsync(int invoiceId, decimal amount)
@@ -76,5 +93,6 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
 
             return (true, change); //amount == total
         }
+
     }
 }
