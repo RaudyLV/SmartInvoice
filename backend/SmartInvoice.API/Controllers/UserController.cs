@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartInvoice.Application.Features.Users.Commands.DeleteUserCommand;
@@ -10,12 +11,39 @@ namespace SmartInvoice.API.Controllers
     public class UsersController : BaseApiController
     {
         [HttpGet]
-        public async Task<IActionResult> GetAllUsersAsyns()
+        public async Task<IActionResult> GetUsersAsync(
+            [FromQuery] string? search = null,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortDescending = false
+        )
         {
-            return Ok(await Mediator!.Send(new GetAllUsersQuery()));
+            var query = new GetUsersWithFilterQuery
+            {
+                SearchTerm = search!,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortBy = sortBy!,
+                SortDescending = sortDescending
+            };
+
+            var result = await Mediator!.Send(query);
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(new
+            {
+                result.Data.TotalCount,
+                result.Data.PageNumber,
+                result.Data.PageSize,
+                result.Data.TotalPages,
+                result.Data.HasPreviousPage,
+                result.Data.HasNextPage
+            }));
+
+            return Ok(result);
         }
 
-        [HttpGet("{id}", Name = "GetUserById")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetUserByIdAsync(int id)
         {
             return Ok(await Mediator!.Send(new GetUserByIdQuery
