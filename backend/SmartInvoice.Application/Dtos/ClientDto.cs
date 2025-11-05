@@ -1,4 +1,6 @@
 
+using System.Text.Json.Serialization;
+
 namespace SmartInvoice.Application.Dtos
 {
     public class ClientDto
@@ -9,6 +11,7 @@ namespace SmartInvoice.Application.Dtos
         public string Phone { get; set; }
         public string Address { get; set; }
         public DateTime CreatedAt { get; set; }
+        [JsonIgnore]
         public List<InvoiceDto> Invoices { get; set; }
     }
 }
