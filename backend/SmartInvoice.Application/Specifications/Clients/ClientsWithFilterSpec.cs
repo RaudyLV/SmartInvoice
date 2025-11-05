@@ -1,4 +1,5 @@
 using Ardalis.Specification;
+using SmartInvoice.Application.Common;
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Domain.Entities;
 
@@ -13,6 +14,8 @@ namespace SmartInvoice.Application.Specifications.Clients
             string sortBy = "Name",
             bool sortDescending = false)
         {
+            string normalizedSearch = StringNormalizerHelper.NormalizeSearchTerm(searchTerm);
+
             Query.Skip((pageNumber - 1) * pageSize)
                    .Take(pageSize)
                    .Select(c => new ClientDto
@@ -25,10 +28,10 @@ namespace SmartInvoice.Application.Specifications.Clients
                        CreatedAt = c.CreatedAt
                    });
                     
-            if (!string.IsNullOrEmpty(searchTerm))
+            if (!string.IsNullOrEmpty(normalizedSearch))
             {
-                Query.Search(x => x.Name, $"%{searchTerm}%")
-                    .Search(x => x.Email, $"%{searchTerm}%");
+                Query.Search(x => x.Name, $"%{normalizedSearch}%")
+                    .Search(x => x.Email, $"%{normalizedSearch}%");
             }
 
             if(sortDescending)
