@@ -1,7 +1,5 @@
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +26,7 @@ namespace SmartInvoice.Infrastructure
                 x => x.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
 
-            var cacheConnection = configuration["Redis:Host"]
+            var cacheConnection = configuration["RedisSettings:Host"]
                                          ?? throw new ArgumentNullException("Host were not found in configuration");
             services.AddStackExchangeRedisCache(opts =>
             {
