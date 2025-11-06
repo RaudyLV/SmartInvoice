@@ -1,6 +1,6 @@
 using SmartInvoice.Application.Exceptions;
 using SmartInvoice.Application.Interfaces;
-using SmartInvoice.Application.Specifications.Roles;
+using SmartInvoice.Application.Specifications.UsersRoles;
 using SmartInvoice.Domain.Entities;
 
 namespace SmartInvoice.Infrastructure.Persistence.Services

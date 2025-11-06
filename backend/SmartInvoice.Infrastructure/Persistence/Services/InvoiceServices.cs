@@ -1,4 +1,6 @@
 using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Features.Clients.Queries;
+using SmartInvoice.Application.Features.Invoices.Queries;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Specifications.Invoices;
 using SmartInvoice.Domain.Entities;
@@ -38,21 +40,53 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             await _repository.SaveChangesAsync();
         }
 
-        public async Task<List<InvoiceDto>> GetActivesInvoices()
+      
+        public async Task<List<InvoiceDto>> GetClientInvoicesByFilter(GetClientInvoicesByFilterQuery query)
         {
-            var invoices = await _repository.ListAsync(new GetActiveInvoicesSpec());
-            if (!invoices.Any())
-                throw new NotFoundException("No active invoices were found");
+            var clientInvoices = await _repository.ListAsync(new ClientsInvoicesWithFilterSpec(
+                name: query.Name,
+                issuedDate: query.IssuedDate,
+                dueDate: query.DueDate,
+                minPrice: query.MinPrice,
+                maxPrice: query.MaxPrice,
+                status: query.Status,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize,
+                sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
 
-            return invoices;
-        }
-        public async Task<List<InvoiceDto>> GetClientInvoicesByName(string clientName)
-        {
-            var clientInvoices = await _repository.ListAsync(new GetClientInvoicesSpec(clientName));
             if (clientInvoices == null || clientInvoices.Count <= 0)
                 throw new NotFoundException("This client has no active invoices");
 
             return clientInvoices;
+        }
+
+        public async Task<List<InvoiceDto>> InvoicesWithFilterAsync(GetInvoicesWithFilterQuery query)
+        {
+            var invoices = await _repository.ListAsync(new InvoicesWithFilterSpec(
+                searchTerm: query.SearchTerm,
+                minPrice: query.MinPrice,
+                maxPrice: query.MaxPrice,
+                status: query.Status,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize,
+                sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
+
+            if (!invoices.Any())
+            {
+                throw new NotFoundException("No invoices were found.");
+            }
+
+            return invoices;
+        }
+        public async Task<int> CountAsync(string query)
+        {
+            int count = await _repository.CountAsync(new CountInvoicesSpec(query));
+
+            return count;
         }
 
         public async Task<Invoice> GetById(int id)

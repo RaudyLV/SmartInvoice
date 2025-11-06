@@ -1,5 +1,6 @@
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Features.Users.Queries;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Specifications.Users;
 
@@ -33,10 +34,17 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             return user!;
         }
 
-        public async Task<List<UserDto>> GetAllUsersAsync()
+        public async Task<List<UserDto>> UsersWithFilterAsync(GetUsersWithFilterQuery query)
         {
-            var users = await _repository.ListAsync(new GetAllUsersSpec());
-            if (users == null || !users.Any())
+            var users = await _repository.ListAsync(new UsersWithFilterSpec(
+                searchTerm: query.SearchTerm,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize,
+                sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
+
+            if (users.Count <= 0)
             {
                 throw new NotFoundException("There is no active users");
             }
@@ -76,6 +84,13 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             {
                 throw new BadRequestException("Username or email already exists");
             }
+        }
+
+        public async Task<int> CountAsync(string searchTerm)
+        {
+            int totalCount = await _repository.CountAsync(new CountUserSpec(searchTerm));
+
+            return totalCount;
         }
     }
 }

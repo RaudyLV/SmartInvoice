@@ -1,5 +1,6 @@
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Features.Clients.Queries;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Specifications.Clients;
 using SmartInvoice.Domain.Entities;
@@ -12,6 +13,28 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
         public ClientServices(IBaseRepository<Client> repository)
         {
             _repository = repository;
+        }
+        public async Task<List<ClientDto>> GetAllClientsAsync(GetAllClientsQuery query)
+        {
+            var clients = await _repository.ListAsync(new ClientsWithFilterSpec(
+                searchTerm: query.SearchTerm,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize,
+                sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
+        
+            if (!clients.Any())
+                throw new NotFoundException("No active clients found");
+
+            return clients;   
+        }
+
+        public async Task<int> CountAsync(string searchTerm)
+        {
+            int count = await _repository.CountAsync(new ClientCountSpec(searchTerm));
+
+            return count;
         }
 
         public async Task AddClient(Client client)
@@ -28,16 +51,6 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             await _repository.SaveChangesAsync();
         }
 
-        public async Task<ClientDto> FindClientByQuery(string query)
-        {
-            var client = await _repository.FirstOrDefaultAsync(new FindClientByQuerySpec(query));
-            if (client == null)
-            {
-                throw new NotFoundException("Client not found");
-            }
-
-            return client;
-        }
         public async Task<ClientDto> GetClientByEmail(string email)
         {
             var existingClient = await _repository.FirstOrDefaultAsync(new GetClientByEmailSpec(email));
@@ -66,13 +79,5 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             await _repository.SaveChangesAsync();
         }
 
-        public async Task<List<ClientDto>> GetAllClientsAsync()
-        {
-            var clients = await _repository.ListAsync(new GetAllClientsSpec());
-            if (!clients.Any())
-                throw new NotFoundException("No active clients found");
-
-            return clients;   
-        }
     }
 }

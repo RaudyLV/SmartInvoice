@@ -82,7 +82,7 @@ Edita `appsettings.Development.json`:
     "Key": "tu-clave-super-secreta-de-al-menos-32-caracteres",
     "Issuer": "SmartInvoice",
     "Audience": "SmartInvoiceUsers",
-    "ExpireMinutes": 60 (ej)
+    "ExpireMinutes": 60 
   }
 }
 
@@ -97,7 +97,7 @@ dotnet ef database update --project backend/SmartInvoice.Infrastructure --startu
 
 ### 4. Ejecutar la aplicación
 ```bash
-dotnet run
+dotnet watch run
 ```
 
 La API estará disponible en: `https://localhost:3000` (o el puerto configurado)
@@ -108,19 +108,21 @@ Swagger UI: `https://localhost:3000/swagger`
 ```
 SmartInvoice/
 ├── backend/
-│   ├── SmartInvoice.API/              # Capa de presentación (Controllers)
-│   ├── SmartInvoice.Application/      # Lógica de aplicación (CQRS)
-│   │   ├── Commands/                  # Commands (escritura)
-│   │   ├── Queries/                   # Queries (lectura)
-│   │   ├── DTOs/                      # Data Transfer Objects
-│   │   └── Mappings/                  # Perfiles de AutoMapper
-│   ├── SmartInvoice.Domain/           # Entidades y lógica de negocio
-│   │   ├── Entities/                  # Modelos de dominio
-│   │   
-│   └── SmartInvoice.Infrastructure/   # Acceso a datos
-│       ├── Data/                      # DbContext
-│       └── Repositories/              # (Opcional) Repositorios específicos
-
+│   ├── SmartInvoice.API/              # Capa de presentación (**Controllers**)
+│   ├── SmartInvoice.Application/      # **Lógica de aplicación (CQRS)**
+│   │   ├── Commands/                  # Commands (**escritura**)
+│   │   ├── Queries/                   # Queries (**lectura**)
+│   │   ├── DTOs/                      # Data Transfer Objects
+│   │   ├── Mappings/                  # Perfiles de AutoMapper
+│   │   ├── **Common/**                # **Clases de ayuda/Utilidades (Helpers)**
+│   │   └── **Specifications/**        # **Especificaciones de Ardalis (Queries y Paginación)**
+│   ├── SmartInvoice.Domain/           # Entidades y lógica de negocio
+│   │   └── Entities/                  # Modelos de dominio
+│   │   
+│   └── SmartInvoice.Infrastructure/   # Acceso a datos y servicios externos
+│       ├── Data/                      # DbContext
+│       ├── Repositories/              # (Opcional) Repositorios específicos
+│       └── **Services/**              # **Implementación de lógica reutilizable (p. ej., GetById, GetAll)**
 ```
 
 ---
@@ -135,7 +137,7 @@ POST /api/auth/login
 
 ### Productos
 ```http
-GET    /api/products
+GET    /api/products/search
 GET    /api/products/{id}
 POST   /api/products
 PUT    /api/products/{id}
@@ -155,8 +157,15 @@ GET    /api/clients/{id}/invoices
 ### Facturas (invoices)
 ```http
 POST   /api/invoices
-GET    /api/invoices
+GET    /api/invoices/search
 UPDATE /api/invoices/{id}
+
+```
+### Payments (pagos)
+```http
+POST   /api/payments
+GET    /api/payments/search
+GET /api/payments/{id}
 ```
 
 **Ejemplo: Crear factura**
@@ -209,12 +218,6 @@ POST /api/invoices
 }
 ```
 
-### Pagos
-```http
-POST   /api/invoices/{id}/payments
-GET    /api/invoices/{id}/payments
-```
-
 ---
 
 ## 💼 Reglas de Negocio
@@ -247,12 +250,6 @@ GET    /api/invoices/{id}/payments
   - Cachear productos más consultados
   - Cachear listados de clientes
   - TTL configurable por tipo de datos
-
-- [ ] **Paginación y filtros avanzados**
-  - Paginación con `PagedList<T>`
-  - Filtros por fecha, cliente, estado
-  - Ordenamiento dinámico (por total, fecha, etc.)
-  - Búsqueda full-text
 
 - [ ] **Serilog para logging estructurado**
   - Logs en archivos y consola

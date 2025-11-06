@@ -1,7 +1,7 @@
 using Ardalis.Specification;
 using SmartInvoice.Domain.Entities;
 
-namespace SmartInvoice.Application.Specifications.Roles
+namespace SmartInvoice.Application.Specifications.UsersRoles
 {
     public class GetRoleByNameSpec : Specification<Role>
     {

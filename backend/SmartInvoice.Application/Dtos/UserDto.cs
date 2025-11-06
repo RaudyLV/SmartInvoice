@@ -15,7 +15,6 @@ namespace SmartInvoice.Application.Dtos
         [JsonIgnore]
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
-        public List<Invoice> Invoices { get; set; }
         public List<string> UserRoles { get; set; }
     }
 }

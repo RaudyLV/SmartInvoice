@@ -1,5 +1,6 @@
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Exceptions;
+using SmartInvoice.Application.Features.Products.Queries;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Specifications.Products;
 
@@ -26,15 +27,29 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             await _baseRepository.SaveChangesAsync();
         }
 
-        public async Task<List<ProductDto>> GetAllProducts()
+        public async Task<List<ProductDto>> ProductsWithFilterAsync(GetAllProductsQuery query)
         {
-            var products = await _baseRepository.ListAsync(new GetAllProductsSpec());
+            var products = await _baseRepository.ListAsync(new ProductsWithFilterSpec(
+                searchTerm: query.SearchTerm,
+                minPrice: query.MinPrice,
+                maxPrice: query.MaxPrice,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize, sortBy: query.SortBy,
+                sortDescending: query.SortDescending
+            ));
+            
             if (products == null || !products.Any())
             {
                 throw new NotFoundException("No products available");
             }
 
             return products;
+        }
+        public async Task<int> CountAsync(string searchTerm)
+        {
+            int totalCount = await _baseRepository.CountAsync(new CountProductsSpec(searchTerm));
+
+            return totalCount;
         }
 
         public async Task<ProductDto> GetProduct(int id)
@@ -81,5 +96,6 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
             await _baseRepository.UpdateAsync(product);
             await _baseRepository.SaveChangesAsync();
         }
+
     }
 }
