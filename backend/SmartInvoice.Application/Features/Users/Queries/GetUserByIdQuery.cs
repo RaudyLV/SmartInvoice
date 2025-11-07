@@ -6,9 +6,13 @@ using SmartInvoice.Application.Wrappers;
 
 namespace SmartInvoice.Application.Features.Users.Queries
 {
-    public class GetUserByIdQuery : IRequest<Response<UserDto>>
+    public class GetUserByIdQuery : IRequest<Response<UserDto>>, ICacheableQuery
     {
         public int Id { get; set; }
+
+        public string CacheKey => $"product_{Id}";
+
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
     }
 
     public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Response<UserDto>>

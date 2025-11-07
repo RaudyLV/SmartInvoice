@@ -15,11 +15,12 @@ namespace SmartInvoice.Application.Features.Users.Commands.DeleteUserCommand
     {
         private readonly IMapper _mapper;
         private readonly IUserServices _userServices;
-
-        public DeleteUserCommandHandler(IMapper mapper, IUserServices userServices)
+        private readonly ICacheServices _cacheServices;
+        public DeleteUserCommandHandler(IMapper mapper, IUserServices userServices, ICacheServices cacheServices)
         {
             _mapper = mapper;
             _userServices = userServices;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<string>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
@@ -27,6 +28,8 @@ namespace SmartInvoice.Application.Features.Users.Commands.DeleteUserCommand
             var user = _mapper.Map<User>(request);
 
             await _userServices.DeleteUserAsync(user);
+
+            await _cacheServices.RemoveByPrefixAsync("users_list", cancellationToken);
 
             return new Response<string>("User deleted successfully");
         }

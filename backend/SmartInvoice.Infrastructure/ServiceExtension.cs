@@ -1,7 +1,6 @@
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json.Serialization;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +14,7 @@ using SmartInvoice.Infrastructure.Persistence.Data;
 using SmartInvoice.Infrastructure.Persistence.Helpers;
 using SmartInvoice.Infrastructure.Persistence.Repositories;
 using SmartInvoice.Infrastructure.Persistence.Services;
+using StackExchange.Redis;
 
 namespace SmartInvoice.Infrastructure
 {
@@ -26,6 +26,19 @@ namespace SmartInvoice.Infrastructure
                 opts.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
                 x => x.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
+
+            var cacheConnection = configuration["RedisSettings:Host"]
+                                         ?? throw new ArgumentNullException("Host were not found in configuration");
+            services.AddStackExchangeRedisCache(opts =>
+            {
+                opts.Configuration = cacheConnection;
+                opts.InstanceName = configuration["InstanceName"];
+            });
+
+            services.AddSingleton<IConnectionMultiplexer>(
+                ConnectionMultiplexer.Connect(cacheConnection)
+            );
+
             services.AddScoped<IAuthServices, AuthServices>();
             services.AddScoped<IUserServices, UserService>();
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
@@ -35,7 +48,8 @@ namespace SmartInvoice.Infrastructure
             services.AddScoped<IProductServices, ProductServices>();
             services.AddScoped<IClientServices, ClientServices>();
             services.AddScoped<IPaymentServices,PaymentServices>();
-            services.AddScoped<IInvoiceServices,InvoiceServices>();
+            services.AddScoped<IInvoiceServices, InvoiceServices>();
+            services.AddScoped<ICacheServices, CacheServices>();
 
 
             var key = configuration["JWTSettings:Key"]

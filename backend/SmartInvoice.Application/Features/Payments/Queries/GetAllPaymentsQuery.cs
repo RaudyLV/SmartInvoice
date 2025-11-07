@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using MediatR;
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Interfaces;
@@ -6,7 +8,7 @@ using SmartInvoice.Domain.Enums;
 
 namespace SmartInvoice.Application.Features.Payments.Queries
 {
-    public record GetAllPaymentsQuery : IRequest<Response<PagedList<PaymentDto>>>
+    public class GetAllPaymentsQuery : IRequest<Response<PagedList<PaymentDto>>>, ICacheableQuery
     {
         public string SearchTerm { get; set; }
         public int? MinAmount { get; set; }
@@ -16,6 +18,22 @@ namespace SmartInvoice.Application.Features.Payments.Queries
         public int PageSize { get; set; } = 10;
         public string SortBy { get; set; } = "PaymentDate";
         public bool SortDescending { get; set; } = false;
+
+        public string CacheKey
+        {
+            get
+            {
+                var keyComponents = $"{SearchTerm}|{MinAmount}|{MaxAmount}|{Method}" +
+                                    $"{PageNumber}|{PageSize}|{SortBy}|{SortDescending}";
+
+                var sha256 = SHA256.Create();
+                var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(keyComponents));
+                var hash = Convert.ToBase64String(hashBytes)[..10];
+
+                return $"payments_list_{hash}";
+            }
+        }
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(5); 
     }
 
     public class GetAllPaymentsQueryHandler : 

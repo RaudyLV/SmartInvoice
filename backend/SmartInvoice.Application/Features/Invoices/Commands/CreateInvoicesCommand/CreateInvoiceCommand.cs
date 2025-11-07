@@ -24,12 +24,15 @@ namespace SmartInvoice.Application.Features.Invoices.Commands.CreateInvoicesComm
         private readonly IMapper _mapper;
         private readonly IClientServices _clientServices;
         private readonly IInvoiceServices _invoiceServices;
-        public CreateInvoiceCommandHandler(IProductServices productServices, IMapper mapper, IClientServices clientServices, IInvoiceServices invoiceServices)
+        private readonly ICacheServices _cacheServices;
+        public CreateInvoiceCommandHandler(IProductServices productServices, IMapper mapper,
+         IClientServices clientServices, IInvoiceServices invoiceServices, ICacheServices cacheServices)
         {
             _productServices = productServices;
             _mapper = mapper;
             _clientServices = clientServices;
             _invoiceServices = invoiceServices;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<InvoiceDto>> Handle(CreateInvoiceCommand command, CancellationToken cancellationToken)
@@ -69,6 +72,8 @@ namespace SmartInvoice.Application.Features.Invoices.Commands.CreateInvoicesComm
 
                 await _productServices.ReduceStock(p.ProductId, p.Quantity);
 
+                await _cacheServices.RemoveByPrefixAsync("products_list", cancellationToken);
+
                 invoice.InvoiceItems.Add(new InvoiceItem
                 {
                     ProductId = p.ProductId,
@@ -85,6 +90,8 @@ namespace SmartInvoice.Application.Features.Invoices.Commands.CreateInvoicesComm
             invoice.Total = invoice.SubTotal + invoice.TaxTotal - invoice.Discount;
 
             await _invoiceServices.CreateInvoice(invoice);
+
+            await _cacheServices.RemoveByPrefixAsync("invoices_list", cancellationToken);
 
             var invoiceDto = _mapper.Map<InvoiceDto>(invoice);
             invoiceDto.ClientName = client.Name;

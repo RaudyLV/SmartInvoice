@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using MediatR;
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Interfaces;
@@ -5,7 +7,8 @@ using SmartInvoice.Application.Wrappers;
 
 namespace SmartInvoice.Application.Features.Products.Queries
 {
-    public class GetAllProductsQuery : IRequest<Response<PagedList<ProductDto>>>
+    public class GetAllProductsQuery : IRequest<Response<PagedList<ProductDto>>>,
+    ICacheableQuery
     {
         public string SearchTerm { get; set; } 
         public decimal? MinPrice { get; set; }
@@ -14,6 +17,23 @@ namespace SmartInvoice.Application.Features.Products.Queries
         public int PageSize { get; set; } = 10;
         public string SortBy { get; set; } = "CreatedAt";
         public bool SortDescending { get; set; } = false;
+
+        public string CacheKey
+        {
+            get
+            {
+                var keyComponents = $"{SearchTerm}|{MinPrice}|{MaxPrice}" +
+                                    $"{PageNumber}|{PageNumber}|{SortBy}|{SortDescending}";
+
+                var sha256 = SHA256.Create();
+                var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(keyComponents));
+                var hash = Convert.ToBase64String(hashBytes);
+
+                return $"products_list_{hash}";
+            }
+        }
+
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
     }
 
 

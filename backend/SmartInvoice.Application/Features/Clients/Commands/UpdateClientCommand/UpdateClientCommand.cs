@@ -20,10 +20,12 @@ namespace SmartInvoice.Application.Features.Clients.Commands.UpdateClientCommand
     {
         private readonly IClientServices _clientServices;
         private readonly IMapper _mapper;
-        public UpdateClientCommandHandler(IClientServices clientServices, IMapper mapper)
+        private readonly ICacheServices _cacheServices;
+        public UpdateClientCommandHandler(IClientServices clientServices, IMapper mapper, ICacheServices cacheServices)
         {
             _clientServices = clientServices;
             _mapper = mapper;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<ClientDto>> Handle(UpdateClientCommand request, CancellationToken cancellationToken)
@@ -34,6 +36,8 @@ namespace SmartInvoice.Application.Features.Clients.Commands.UpdateClientCommand
 
             _mapper.Map(request, client);
             await _clientServices.UpdateClient(client);
+
+            await _cacheServices.RemoveByPrefixAsync("clients_list", cancellationToken);
 
             var clientDto = _mapper.Map<ClientDto>(client);
 

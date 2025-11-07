@@ -27,11 +27,12 @@ namespace SmartInvoice.Application.Features.Products.Commands.CreateProductComma
     {
         private readonly IProductServices _productServices;
         private readonly IMapper _mapper;
-
-        public CreateProductCommandHandler(IProductServices productServices, IMapper mapper)
+        private readonly ICacheServices _cacheServices;
+        public CreateProductCommandHandler(IProductServices productServices, IMapper mapper, ICacheServices cacheServices)
         {
             _productServices = productServices;
             _mapper = mapper;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<ProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
@@ -48,6 +49,8 @@ namespace SmartInvoice.Application.Features.Products.Commands.CreateProductComma
                                     : "No description available";
 
             await _productServices.AddProduct(product);
+
+            await _cacheServices.RemoveByPrefixAsync("products_list", cancellationToken);
 
             var productDto = _mapper.Map<ProductDto>(product);
 

@@ -1,4 +1,6 @@
 
+using System.Security.Cryptography;
+using System.Text;
 using MediatR;
 using SmartInvoice.Application.Dtos;
 using SmartInvoice.Application.Interfaces;
@@ -6,13 +8,31 @@ using SmartInvoice.Application.Wrappers;
 
 namespace SmartInvoice.Application.Features.Users.Queries
 {
-    public class GetUsersWithFilterQuery : IRequest<Response<PagedList<UserDto>>>
+    public class GetUsersWithFilterQuery : IRequest<Response<PagedList<UserDto>>>,
+    ICacheableQuery
     {
-        public string SearchTerm { get; set; }
+        public string SearchTerm { get; set; } = null!;
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
-        public string SortBy { get; set; }
-        public bool SortDescending { get; set; } 
+        public string SortBy { get; set; } = null!;
+        public bool SortDescending { get; set; }
+
+        public string CacheKey
+        {
+            get
+            {
+                var keyComponents = $"{SearchTerm}" +
+                                    $"{PageNumber}|{PageSize}|{SortBy}|{SortDescending}";
+
+                var sha256 = SHA256.Create();
+                var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(keyComponents));
+                var hash = Convert.ToBase64String(hashBytes);
+
+                return $"users_list_{hash}";
+            }
+        }
+
+        public TimeSpan? CacheDuration => throw new NotImplementedException();
     }
 
     public class GetUsersWithFilterQueryHandler

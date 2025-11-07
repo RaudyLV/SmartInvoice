@@ -17,11 +17,12 @@ namespace SmartInvoice.Application.Features.Users.Commands.UpdateUserCommand
     {
         private readonly IMapper _mapper;
         private readonly IUserServices _userServices;
-
-        public UpdateUserCommandHandler(IMapper mapper, IUserServices userServices)
+        private readonly ICacheServices _cacheServices;
+        public UpdateUserCommandHandler(IMapper mapper, IUserServices userServices, ICacheServices cacheServices)
         {
             _mapper = mapper;
             _userServices = userServices;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<UserDto>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -35,6 +36,8 @@ namespace SmartInvoice.Application.Features.Users.Commands.UpdateUserCommand
             _mapper.Map(request, user); //mapeamos la request con ese user 
 
             await _userServices.UpdateUserAsync(user);
+
+            await _cacheServices.RemoveByPrefixAsync("users_list", cancellationToken);
 
             var userDto = _mapper.Map<UserDto>(user); //mapeamos a dto el user actualizado
 

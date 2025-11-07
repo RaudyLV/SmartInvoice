@@ -5,9 +5,14 @@ using SmartInvoice.Application.Wrappers;
 
 namespace SmartInvoice.Application.Features.Payments.Queries
 {
-    public class GetPaymentByIdQuery : IRequest<Response<PaymentDto>>
+    public class GetPaymentByIdQuery : IRequest<Response<PaymentDto>>, ICacheableQuery
     {
         public int Id { get; set; }
+
+        public string CacheKey => $"payment_{Id}";
+
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
+
         public GetPaymentByIdQuery(int id)
         {
             Id = id;

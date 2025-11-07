@@ -27,12 +27,14 @@ namespace SmartInvoice.Application.Features.Payments.Commands
         private readonly IPaymentServices _paymentServices;
         private readonly IMapper _mapper;
         private readonly IInvoiceServices _invoiceServices;
-
-        public PayInvoiceCommandHandler(IPaymentServices paymentServices, IMapper mapper, IInvoiceServices invoiceServices)
+        private readonly ICacheServices _cacheServices;
+        public PayInvoiceCommandHandler(IPaymentServices paymentServices, IMapper mapper,
+        IInvoiceServices invoiceServices, ICacheServices cacheServices)
         {
             _paymentServices = paymentServices;
             _mapper = mapper;
             _invoiceServices = invoiceServices;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<PaymentDto>> Handle(PayInvoiceCommand request, CancellationToken cancellationToken)
@@ -50,6 +52,9 @@ namespace SmartInvoice.Application.Features.Payments.Commands
             var payment = _mapper.Map<Payment>(request);
             await _paymentServices.PayInvoice(payment);
 
+            //Limpia todos los caches de payments
+            await _cacheServices.RemoveByPrefixAsync("payments_list", cancellationToken); 
+
             var paymentDto = _mapper.Map<PaymentDto>(payment);
             paymentDto.InvoiceNumber = invoice.InvoiceNumber;
 
@@ -57,6 +62,7 @@ namespace SmartInvoice.Application.Features.Payments.Commands
             {
                 invoice.Status = Status.Paid;
                 await _invoiceServices.UpdateInvoice(invoice);
+                await _cacheServices.RemoveByPrefixAsync("invoices_list", cancellationToken); 
 
                 return new Response<PaymentDto>(paymentDto, $"Transaction complete. Change due: {totalAmount}");
             }

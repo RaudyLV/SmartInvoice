@@ -16,14 +16,18 @@ namespace SmartInvoice.Application.Features.Auth.Commands
     public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Response<string>>
     {
         private readonly IAuthServices _authService;
-
-        public RegisterCommandHandler(IAuthServices authService)
+        private readonly ICacheServices _cacheServices;
+        public RegisterCommandHandler(IAuthServices authService, ICacheServices cacheServices)
         {
             _authService = authService;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<string>> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
+
+            await _cacheServices.RemoveByPrefixAsync("users_list", cancellationToken);
+
             return await _authService.RegisterAsync(new RegisterRequest
             {
                 Username = request.Username,

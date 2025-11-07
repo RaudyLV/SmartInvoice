@@ -19,20 +19,20 @@ namespace SmartInvoice.Application.Features.Products.Commands.UpdateProductComma
     {
         private readonly IProductServices _productServices;
         private readonly IMapper _mapper;
-
-        public UpdateProductCommandHandler(IProductServices productServices, IMapper mapper)
+        private readonly ICacheServices _cacheServices;
+        public UpdateProductCommandHandler(IProductServices productServices, IMapper mapper, ICacheServices cacheServices)
         {
             _productServices = productServices;
             _mapper = mapper;
+            _cacheServices = cacheServices;
         }
-
+        
         public async Task<Response<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
         {
 
-            var existingProductDto = await _productServices.GetProduct(request.ProductId);
-            if (existingProductDto == null)
-                throw new NotFoundException("Product not found");
-
+            var existingProductDto = await _productServices.GetProduct(request.ProductId)
+                    ?? throw new NotFoundException("Product not found");
+                    
             if (!string.IsNullOrEmpty(request.Name) && request.Name != existingProductDto.Name)
                 await _productServices.VerifyExistingProduct(request.Name!);
 
@@ -41,6 +41,8 @@ namespace SmartInvoice.Application.Features.Products.Commands.UpdateProductComma
             _mapper.Map(request, existingProduct);
 
             await _productServices.UpdateProduct(existingProduct);
+
+            await _cacheServices.RemoveByPrefixAsync("products_list");
 
             var updatedProductDto = _mapper.Map<ProductDto>(existingProduct);
 

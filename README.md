@@ -1,6 +1,6 @@
 # 🧾 SmartInvoice
 
-**SmartInvoice** es una API REST para gestión de facturación, productos, clientes y pagos. Desarrollada con .NET y siguiendo patrones modernos como **CQRS + MediatR** y **Clean Architecture**.
+**SmartInvoice** es una API REST para gestión de facturación, productos, clientes y pagos. Desarrollada con .NET y siguiendo patrones modernos como **CQRS + MediatR** **Redis + paginación** y **Clean/Onion Architecture**.
 
 ---
 
@@ -43,6 +43,7 @@ Pensado como proyecto educativo y base para sistemas de facturación reales.
 - **Control de stock**: Actualización automática al crear facturas
 - **Estados de pago**: Unpaid, PartiallyPaid, Paid
 - **Manejo de errores personalizado**: Excepciones de negocio específicas
+- **Cacheo con redis**: Cacheo de queries optimizado 
 
 ---
 
@@ -58,6 +59,7 @@ Pensado como proyecto educativo y base para sistemas de facturación reales.
 | MediatR | 12.0 | CQRS pattern |
 | FluentValidation | 11.0 | Validaciones |
 | Swagger/OpenAPI | 3.0 | Documentación API |
+| Redis Cache | 3.0.504 | Caching |
 
 ---
 
@@ -67,12 +69,13 @@ Pensado como proyecto educativo y base para sistemas de facturación reales.
 - **SQL Server** (LocalDB, Express o Developer)
 - **Visual Studio 2022** o **VS Code** con extensión C#
 - **Git**
+- **Redis 3.0.504 64 bit**
 
 ---
 
 ### 2. Configurar la base de datos
 
-Edita `appsettings.Development.json`:
+Edita `appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
@@ -83,6 +86,11 @@ Edita `appsettings.Development.json`:
     "Issuer": "SmartInvoice",
     "Audience": "SmartInvoiceUsers",
     "ExpireMinutes": 60 
+  },
+  "RedisSettings": {
+    "Host": "localhost",
+    "Port": 6379,
+    "InstanceName": "SmartInvoice_API"
   }
 }
 
@@ -104,12 +112,16 @@ La API estará disponible en: `https://localhost:3000` (o el puerto configurado)
 
 Swagger UI: `https://localhost:3000/swagger`
 
+Redis: `localhost:6379`
+
+
 ## 📁 Estructura del Proyecto
 ```
 SmartInvoice/
 ├── backend/
 │   ├── SmartInvoice.API/              # Capa de presentación (**Controllers**)
 │   ├── SmartInvoice.Application/      # **Lógica de aplicación (CQRS)**
+│   │   ├── Behaviors/                  # Pipelines (Caching behavior, etc)
 │   │   ├── Commands/                  # Commands (**escritura**)
 │   │   ├── Queries/                   # Queries (**lectura**)
 │   │   ├── DTOs/                      # Data Transfer Objects
@@ -246,21 +258,10 @@ POST /api/invoices
 
 ### 🔜 Próximamente
 
-- [ ] **Redis para caché**
-  - Cachear productos más consultados
-  - Cachear listados de clientes
-  - TTL configurable por tipo de datos
-
 - [ ] **Serilog para logging estructurado**
   - Logs en archivos y consola
   - Integración con Seq/Elasticsearch
   - Correlación de requests
-
-### 🌟 Funcionalidades Adicionales
-- [ ] Multi-tenancy
-- [ ] Docker compose para dev environment
-- [ ] CI/CD con GitHub Actions
-- [ ] Auditoría de cambios (quien modificó qué)
 
 ---
 
