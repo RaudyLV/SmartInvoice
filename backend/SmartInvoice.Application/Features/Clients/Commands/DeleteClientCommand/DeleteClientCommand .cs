@@ -20,10 +20,12 @@ namespace SmartInvoice.Application.Features.Clients.Commands.DeleteClientCommand
     {
         private readonly IClientServices _clientServices;
         private readonly IMapper _mapper;
-        public DeleteClientCommandHandler(IClientServices clientServices, IMapper mapper)
+        private readonly ICacheServices _cacheServices;
+        public DeleteClientCommandHandler(IClientServices clientServices, IMapper mapper, ICacheServices cacheServices)
         {
             _clientServices = clientServices;
             _mapper = mapper;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<ClientDto>> Handle(DeleteClientCommand request, CancellationToken cancellationToken)
@@ -31,6 +33,8 @@ namespace SmartInvoice.Application.Features.Clients.Commands.DeleteClientCommand
             var client = await _clientServices.GetClientById(request.ClientId);
 
             await _clientServices.DeleteClient(client);
+
+            await _cacheServices.RemoveByPrefixAsync("clients_list", cancellationToken);
 
             var clientDto = _mapper.Map<ClientDto>(client);
 

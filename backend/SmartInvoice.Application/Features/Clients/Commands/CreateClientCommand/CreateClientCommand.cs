@@ -27,10 +27,12 @@ namespace SmartInvoice.Application.Features.Clients.Commands.CreateClientCommand
     {
         private readonly IClientServices _clientServices;
         private readonly IMapper _mapper;
-        public CreateClientCommandHandler(IClientServices clientServices, IMapper mapper)
+        private readonly ICacheServices _cacheServices;
+        public CreateClientCommandHandler(IClientServices clientServices, IMapper mapper, ICacheServices cacheServices)
         {
             _clientServices = clientServices;
             _mapper = mapper;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<ClientDto>> Handle(CreateClientCommand request, CancellationToken cancellationToken)
@@ -40,8 +42,10 @@ namespace SmartInvoice.Application.Features.Clients.Commands.CreateClientCommand
             client.Address = !string.IsNullOrEmpty(request.Address) ?
                             request.Address
                             : "No address available";
-                            
+
             await _clientServices.AddClient(client);
+
+            await _cacheServices.RemoveByPrefixAsync("clients_list", cancellationToken);
 
             var clientDto = _mapper.Map<ClientDto>(client);
 

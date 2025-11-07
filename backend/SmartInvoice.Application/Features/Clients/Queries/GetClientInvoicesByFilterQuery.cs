@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using MediatR;
 using SmartInvoice.Application.Interfaces;
 using SmartInvoice.Application.Wrappers;
@@ -5,7 +7,7 @@ using SmartInvoice.Domain.Enums;
 
 namespace SmartInvoice.Application.Features.Clients.Queries
 {
-    public class GetClientInvoicesByFilterQuery : IRequest<Response<PagedList<InvoiceDto>>>
+    public class GetClientInvoicesByFilterQuery : IRequest<Response<PagedList<InvoiceDto>>>, ICacheableQuery
     {
         public string Name { get; set; } = null!;
         public DateTime? IssuedDate { get; set; } = null;
@@ -17,6 +19,24 @@ namespace SmartInvoice.Application.Features.Clients.Queries
         public int PageSize { get; set; } = 10;
         public string SortBy { get; set; } = "CreatedAt";
         public bool SortDescending { get; set; } = false;
+
+        public string CacheKey
+        {
+            get
+            {
+                var keyComponents = $"{Name}|{IssuedDate}|{DueDate}|{MinPrice}|{MaxPrice}|{Status}" +
+                                    $"{PageNumber}|{PageSize}|{SortBy}|{SortDescending}";
+
+
+                var sha256 = SHA256.Create();
+                var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(keyComponents));
+                var hash = Convert.ToBase64String(hashBytes);
+
+                return $"clients_invoices_list_{hash}";
+            }
+        }
+
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(5);
     }
 
     public class GetClientInvoicesByFilterQueryHandler

@@ -20,10 +20,12 @@ namespace SmartInvoice.Application.Features.Products.Commands.DeleteProductComma
     {
         private readonly IProductServices _productServices;
         private readonly IMapper _mapper;
-        public DeleteProductCommandHandler(IProductServices productServices, IMapper mapper)
+        private readonly ICacheServices _cacheServices;
+        public DeleteProductCommandHandler(IProductServices productServices, IMapper mapper, ICacheServices cacheServices)
         {
             _productServices = productServices;
             _mapper = mapper;
+            _cacheServices = cacheServices;
         }
 
         public async Task<Response<ProductDto>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
@@ -33,6 +35,8 @@ namespace SmartInvoice.Application.Features.Products.Commands.DeleteProductComma
             var product = _mapper.Map<Product>(productDto);
 
             await _productServices.DeleteProduct(product);
+
+            await _cacheServices.RemoveByPrefixAsync("products_list", cancellationToken);
 
             return new Response<ProductDto>(productDto, "Product deleted successfully");
         }
