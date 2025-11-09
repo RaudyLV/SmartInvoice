@@ -10,7 +10,7 @@ namespace SmartInvoice.Application.Features.Users.Queries
     {
         public int Id { get; set; }
 
-        public string CacheKey => $"product_{Id}";
+        public string CacheKey => $"users_{Id}";
 
         public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
     }

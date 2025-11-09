@@ -32,7 +32,7 @@ namespace SmartInvoice.Application.Features.Users.Queries
             }
         }
 
-        public TimeSpan? CacheDuration => throw new NotImplementedException();
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
     }
 
     public class GetUsersWithFilterQueryHandler
