@@ -27,6 +27,9 @@ SmartInvoice es un sistema de facturación backend que permite:
 - ✅ Registrar pagos parciales o totales
 - ✅ Consultar clientes y su historial de facturas
 - ✅ Validaciones de negocio robustas
+- ✅ Transacciones para persistencia de datos
+- ✅ Monitoreo con logs
+- ✅ Cache optimizado de las queries
 
 Pensado como proyecto educativo y base para sistemas de facturación reales.
 
@@ -44,6 +47,7 @@ Pensado como proyecto educativo y base para sistemas de facturación reales.
 - **Estados de pago**: Unpaid, PartiallyPaid, Paid
 - **Manejo de errores personalizado**: Excepciones de negocio específicas
 - **Cacheo con redis**: Cacheo de queries optimizado 
+- **Unit of Work**: Manejo de transacciones 
 
 ---
 
@@ -121,7 +125,7 @@ SmartInvoice/
 ├── backend/
 │   ├── SmartInvoice.API/              # Capa de presentación (**Controllers**)
 │   ├── SmartInvoice.Application/      # **Lógica de aplicación (CQRS)**
-│   │   ├── Behaviors/                  # Pipelines (Caching behavior, etc)
+│   │   ├── Behaviors/                 # Pipelines (Caching behavior, TransactionBehavior, LogginBehavior)
 │   │   ├── Commands/                  # Commands (**escritura**)
 │   │   ├── Queries/                   # Queries (**lectura**)
 │   │   ├── DTOs/                      # Data Transfer Objects
@@ -132,7 +136,7 @@ SmartInvoice/
 │   │   └── Entities/                  # Modelos de dominio
 │   │   
 │   └── SmartInvoice.Infrastructure/   # Acceso a datos y servicios externos
-│       ├── Data/                      # DbContext
+│       ├── Data/                      # DbContext, UnitOfWork
 │       ├── Repositories/              # (Opcional) Repositorios específicos
 │       └── **Services/**              # **Implementación de lógica reutilizable (p. ej., GetById, GetAll)**
 ```
@@ -252,16 +256,6 @@ POST /api/invoices
 - ✅ El monto no puede exceder el balance pendiente
 - ✅ Estado se actualiza automáticamente: Issued → PartiallyPaid → Paid
 - ✅ Métodos de pago soportados: Cash, Card, Transfer
-
-
-## 🗺️ Roadmap y Mejoras Futuras
-
-### 🔜 Próximamente
-
-- [ ] **Serilog para logging estructurado**
-  - Logs en archivos y consola
-  - Integración con Seq/Elasticsearch
-  - Correlación de requests
 
 ---
 
