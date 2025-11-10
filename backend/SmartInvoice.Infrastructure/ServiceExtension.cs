@@ -50,6 +50,7 @@ namespace SmartInvoice.Infrastructure
             services.AddScoped<IPaymentServices,PaymentServices>();
             services.AddScoped<IInvoiceServices, InvoiceServices>();
             services.AddScoped<ICacheServices, CacheServices>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 
             var key = configuration["JWTSettings:Key"]
