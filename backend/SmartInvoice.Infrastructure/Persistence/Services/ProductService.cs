@@ -83,8 +83,7 @@ namespace SmartInvoice.Infrastructure.Persistence.Services
                 throw new NotFoundException("Product not found");
 
             if (product.Stock < quantity)
-                throw new BadRequestException("Insufficient stock.");
-
+                throw new BadRequestException($"Insufficient stock for product name: {product.Name}.");
            
                 product.Stock -= quantity;
 
